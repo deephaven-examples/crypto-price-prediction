@@ -1,3 +1,4 @@
+# Connect to deephaven server
 from deephaven_server import Server
 s = Server(port=10000, jvm_args=["-Xmx4g"])
 s.start()
@@ -26,15 +27,13 @@ import tensorflow as tf
 import numpy as np
 import threading
 import time
-
-
 import glob
 import os
+
+# get the lastest file data
 list_of_files = glob.glob('/mnt/c/Users/yuche/all_data/*')
 latest_file = max(list_of_files, key=os.path.getctime)
 print(latest_file)
-
-
 result = read(latest_file)
 data_frame = dhpd.to_pandas(result)
 data_frame=data_frame.iloc[::-1]
@@ -50,9 +49,10 @@ test_data=data_frame.iloc[train_size:]
 train_dh=dhpd.to_table(train_data)
 test_dh=dhpd.to_table(test_data)
 
+
+# set up input and feature size
 n_input = 4
 n_features = 1
-
 model = Sequential()
 model.add(LSTM(100, activation='relu', input_shape=(n_input, n_features)))
 model.add(Dense(1))
@@ -62,16 +62,11 @@ model.compile(optimizer='adam', loss='mse')
 def table_to_numpy_double(rows, cols):
     return gather.table_to_numpy_2d(rows, cols, np_type=np.double)
 
-
-
-
-
 def train_model(data):
     global model
     new_data=data.reshape(-1,1)
     generator = TimeseriesGenerator(new_data, new_data, length=n_input, batch_size=1)
     model.fit(generator, epochs = 50)
-
 
 learn.learn(
     table = train_dh,
@@ -83,14 +78,15 @@ learn.learn(
 
 def get_predicted_class(data, idx):
     return data[idx]
+
 new_data=train_data["Price"].values.reshape(-1,1)
+
 def predict_with_model(data):
     test_predictions = []
     global new_data
     first_eval_batch = new_data[-n_input:]
     current_batch = first_eval_batch.reshape((1, n_input, n_features))
     for i in range(len(data)):
-        
         # get the prediction value for the first batch
         current_pred = model.predict(current_batch)[0]
         # # append the prediction into the array
@@ -99,9 +95,6 @@ def predict_with_model(data):
         # use the prediction to update the batch and remove the first value
         current_batch = np.append(current_batch[:,1:,:],[[add_data]],axis=1)
     return test_predictions
-
-
-
 
 a=learn.learn(
     table = test_dh,
