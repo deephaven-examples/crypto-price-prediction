@@ -84,6 +84,7 @@ learn.learn(
     batch_size=train_dh.size
 )
 
+# predict with the test set
 a = learn.learn(
     table=test_dh,
     model_func=use_fitted_model,
