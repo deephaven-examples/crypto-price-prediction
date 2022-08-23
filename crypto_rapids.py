@@ -1,11 +1,10 @@
+# connect to deephaven server
 from deephaven_server import Server
 s = Server(port=10000, jvm_args=["-Xmx4g"])
 s.start()
 # UGP lock is automatically acquired for each query operation
 from deephaven import ugp
 ugp.auto_locking = True
-import glob
-import os
 
 # Deephaven imports
 from deephaven import dtypes as dht
@@ -15,21 +14,26 @@ from deephaven.parquet import read
 from deephaven import pandas as dhpd
 from deephaven import new_table
 from deephaven.column import string_col, int_col,double_col
+from deephaven.replay import TableReplayer
+from deephaven.time import to_datetime
 
 # Python imports
 from sklearn.preprocessing import MinMaxScaler
-
 import numpy as np
+import glob
+import os
 
+# get the lastest data
 list_of_files = glob.glob('/mnt/c/Users/yuche/all_data/*') # please put your own file location
 latest_file = max(list_of_files, key=os.path.getctime)
 result = read(latest_file)
 data_frame = dhpd.to_pandas(result)
 
-
+# using GPU to do data manipulation
 import cudf; print('cuDF Version:', cudf.__version__)
 data_frame = cudf.from_pandas(data_frame)
 data_frame=data_frame.iloc[::-1]
+
 # too large, only pick subset of data
 data_frame["Price_1"]=data_frame["Price"].shift(1)
 data_frame["Price_2"]=data_frame["Price"].shift(2)
@@ -50,11 +54,6 @@ test_dh=dhpd.to_table(test_data)
 
 import cuml
 from cuml.linear_model import LinearRegression as LinearRegression_GPU
-
-
-
-
-
 
 
 # Create a linear regression model
@@ -92,14 +91,3 @@ a = learn.learn(
     outputs=[learn.Output("Predicted_Price", scatter, "double")],
     batch_size=test_dh.size
 )
-
-from deephaven.replay import TableReplayer
-from deephaven.time import to_datetime
-
-start_time = to_datetime("2022-07-27T21:10:00 NY")
-end_time = to_datetime("2022-07-29T03:15:00 NY")
-
-replayer = TableReplayer(start_time, end_time)
-replayed_table = replayer.add_table(a, "Date")
-replayer.start()
-
