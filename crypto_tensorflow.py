@@ -37,6 +37,7 @@ print(latest_file)
 result = read(latest_file)
 data_frame = dhpd.to_pandas(result)
 data_frame=data_frame.iloc[::-1]
+
 # too large, only pick subset of data
 data_size=int(len(data_frame)*0.98)
 data_frame=data_frame.iloc[data_size:]
@@ -68,6 +69,7 @@ def train_model(data):
     generator = TimeseriesGenerator(new_data, new_data, length=n_input, batch_size=1)
     model.fit(generator, epochs = 50)
 
+# train the model
 learn.learn(
     table = train_dh,
     model_func = train_model,
@@ -96,6 +98,7 @@ def predict_with_model(data):
         current_batch = np.append(current_batch[:,1:,:],[[add_data]],axis=1)
     return test_predictions
 
+# predict with the test set
 a=learn.learn(
     table = test_dh,
     model_func = predict_with_model,
