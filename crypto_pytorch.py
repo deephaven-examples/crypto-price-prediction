@@ -32,13 +32,18 @@ from math import sqrt
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+import glob
+import os
 
 # use the cuda
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
 
 # load the data
-result = read("data07292022112829.parquet")
+list_of_files = glob.glob('/mnt/c/Users/yuche/all_data/*')
+latest_file = max(list_of_files, key=os.path.getctime)
+print(latest_file)
+result = read(latest_file)
 data_frame = dhpd.to_pandas(result)
 data_frame=data_frame.iloc[::-1]
 
@@ -53,8 +58,6 @@ train_data=data_frame.iloc[:train_size]
 test_data=data_frame.iloc[train_size:]
 train_dh=dhpd.to_table(train_data)
 test_dh=dhpd.to_table(test_data)
-
-
 
 
 # train, test split
