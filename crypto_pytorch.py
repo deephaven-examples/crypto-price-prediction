@@ -161,6 +161,7 @@ def train_model(data):
         loss.backward()
         # Update parameters
         optimiser.step()
+	
 # train the model
 learn.learn(
     table = train_dh,
