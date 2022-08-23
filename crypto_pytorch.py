@@ -1,4 +1,4 @@
-
+# connect to deephaven server
 from deephaven_server import Server
 s = Server(port=10000, jvm_args=["-Xmx4g"])
 s.start()
@@ -18,7 +18,6 @@ from deephaven import new_table
 from deephaven.column import string_col, int_col,double_col
 
 # Python imports
-import tensorflow as tf
 import numpy as np
 import threading
 import time
@@ -34,12 +33,15 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+# use the cuda
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print(device)
+
 # load the data
 result = read("data07292022112829.parquet")
 data_frame = dhpd.to_pandas(result)
 data_frame=data_frame.iloc[::-1]
+
 # only pick subset of data
 data_size=int(len(data_frame)*0.98)
 data_frame=data_frame.iloc[data_size:]
@@ -59,18 +61,13 @@ test_dh=dhpd.to_table(test_data)
 def data_split(crypto, look_back):
     data_raw = crypto # convert to numpy array
     data = []
-    
+   
     # create all possible sequences of length look_back
     for index in range(len(data_raw) - look_back): 
         data.append(data_raw[index: index + look_back])
-    
     data = np.array(data)
-
-    
     x_train = data[:,:-1,:]
     y_train = data[:,-1,:]
-
-    
     return [x_train, y_train]
 
 
@@ -130,7 +127,7 @@ loss_fn = torch.nn.MSELoss().to(device)
 optimiser = torch.optim.Adam(model.parameters(), lr=0.01)
 
 
-look_back = 100
+look_back = 4
 def train_model(data):
     x_train, y_train= data_split(data, look_back)
     x_train = torch.from_numpy(x_train).type(torch.Tensor)
