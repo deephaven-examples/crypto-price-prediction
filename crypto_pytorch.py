@@ -64,7 +64,7 @@ test_dh=dhpd.to_table(test_data)
 def data_split(crypto, look_back):
     data_raw = crypto # convert to numpy array
     data = []
-   
+	
     # create all possible sequences of length look_back
     for index in range(len(data_raw) - look_back): 
         data.append(data_raw[index: index + look_back])
@@ -118,17 +118,17 @@ class LSTM(nn.Module):
         out = self.fc(out[:, -1, :]) 
         # out.size() --> 100, 10
         return out
-
-def table_to_numpy_double(rows, cols):
-    return gather.table_to_numpy_2d(rows, cols, np_type=np.double)
     
 
-
+# define the model 
 model = LSTM(input_dim=input_dim, hidden_dim=hidden_dim, output_dim=output_dim, num_layers=num_layers)
 model=model.to(device)
 loss_fn = torch.nn.MSELoss().to(device)
 optimiser = torch.optim.Adam(model.parameters(), lr=0.01)
 
+
+def table_to_numpy_double(rows, cols):
+    return gather.table_to_numpy_2d(rows, cols, np_type=np.double)
 
 look_back = 4
 def train_model(data):
@@ -151,7 +151,6 @@ def train_model(data):
     
     # Forward pass
         y_train_pred = model(x_train)
-
         loss = loss_fn(y_train_pred.to(device), y_train.to(device))
         if t % 10 == 0 and t !=0:
             print("Epoch ", t, "MSE: ", loss.item())
@@ -160,11 +159,9 @@ def train_model(data):
         optimiser.zero_grad()
         # Backward pass
         loss.backward()
-
         # Update parameters
         optimiser.step()
-
-
+# train the model
 learn.learn(
     table = train_dh,
     model_func = train_model,
@@ -173,11 +170,8 @@ learn.learn(
     batch_size = train_dh.size
 )
 
-
-
 def get_predicted_class(data, idx):
     return data[idx]
-
 
 def split_sequence(sequence, n_steps):
 	X, y = list(), list()
@@ -204,7 +198,7 @@ def predict_with_model(data):
     y_test_pred=y_test_pred.reshape(1,-1)[0]
     return y_test_pred
 
-
+# predict on test set
 a=learn.learn(
     table = test_dh,
     model_func = predict_with_model,
