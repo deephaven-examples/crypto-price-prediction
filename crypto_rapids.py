@@ -32,24 +32,24 @@ data_frame = dhpd.to_pandas(result)
 # using GPU to do data manipulation
 import cudf; print('cuDF Version:', cudf.__version__)
 data_frame = cudf.from_pandas(data_frame)
-data_frame=data_frame.iloc[::-1]
+data_frame = data_frame.iloc[::-1]
 
 # too large, only pick subset of data
-data_frame["Price_1"]=data_frame["Price"].shift(1)
-data_frame["Price_2"]=data_frame["Price"].shift(2)
-data_frame["Price_3"]=data_frame["Price"].shift(3)
-data_size=int(len(data_frame)*0.98)
-data_frame=data_frame.iloc[data_size:]
-data_frame=data_frame.reset_index(drop=True)
+data_frame["Price_1"] = data_frame["Price"].shift(1)
+data_frame["Price_2"] = data_frame["Price"].shift(2)
+data_frame["Price_3"] = data_frame["Price"].shift(3)
+data_size = int(len(data_frame)*0.98)
+data_frame = data_frame.iloc[data_size:]
+data_frame = data_frame.reset_index(drop=True)
 data_frame.dropna(inplace=True)
-data_frame=data_frame.reset_index(drop=True)
-train_size=int(len(data_frame)*0.7)
-train_data=data_frame.iloc[:train_size]
-test_data=data_frame.iloc[train_size:]
-train_data=train_data.to_pandas()
-test_data=test_data.to_pandas()
-train_dh=dhpd.to_table(train_data)
-test_dh=dhpd.to_table(test_data)
+data_frame = data_frame.reset_index(drop=True)
+train_size = int(len(data_frame)*0.7)
+train_data = data_frame.iloc[:train_size]
+test_data = data_frame.iloc[train_size:]
+train_data = train_data.to_pandas()
+test_data = test_data.to_pandas()
+train_dh = dhpd.to_table(train_data)
+test_dh = dhpd.to_table(test_data)
 
 
 import cuml
@@ -77,11 +77,11 @@ def scatter(data, idx):
 
 # Train the linear regression model
 learn.learn(
-    table=train_dh,
-    model_func=fit_linear_model,
-    inputs=[learn.Input(["Price_1","Price_2","Price_3"], table_to_numpy), learn.Input("Price", table_to_numpy)],
-    outputs=None,
-    batch_size=train_dh.size
+    table = train_dh,
+    model_func = fit_linear_model,
+    inputs = [learn.Input(["Price_1","Price_2","Price_3"], table_to_numpy), learn.Input("Price", table_to_numpy)],
+    outputs = None,
+    batch_size = train_dh.size
 )
 
 # predict with the test set
