@@ -23,5 +23,5 @@ Predict_table = learn.learn(
     model_func=use_fitted_model,
     inputs=[learn.Input(["Price_1","Price_2","Price_3"], table_to_numpy)],
     outputs=[learn.Output("Predicted_Price", scatter, "double")],
-    batch_size=test_dh.size
+    batch_size=1
 )
