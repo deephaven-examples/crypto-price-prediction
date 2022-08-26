@@ -1,4 +1,3 @@
-# Connect to deephaven server
 from deephaven_server import Server
 s = Server(port=10000, jvm_args=["-Xmx4g"])
 s.start()
@@ -16,43 +15,37 @@ from deephaven import new_table
 from deephaven.column import string_col, int_col,double_col
 
 # Python imports
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from sklearn.preprocessing import MinMaxScaler
+import glob
+import os
 from keras.preprocessing.sequence import TimeseriesGenerator
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
-import tensorflow as tf
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+import tensorflow as tf
 import threading
 import time
-import glob
-import os
 
 # get the lastest file data
 list_of_files = glob.glob('/mnt/c/Users/yuche/all_data/*')
 latest_file = max(list_of_files, key=os.path.getctime)
 print(latest_file)
 result = read(latest_file)
-data_frame = dhpd.to_pandas(result)
-data_frame=data_frame.iloc[::-1]
+data_frame = result.reverse()
 
 # too large, only pick subset of data
-data_size=int(len(data_frame)*0.98)
-data_frame=data_frame.iloc[data_size:]
-data_frame=data_frame.reset_index(drop=True)
-scaler = MinMaxScaler(feature_range=(-1, 1))
-data_frame['Price'] = scaler.fit_transform(data_frame['Price'].values.reshape(-1,1))
-train_size=int(len(data_frame)*0.7)
-train_data=data_frame.iloc[:train_size]
-test_data=data_frame.iloc[train_size:]
-train_dh=dhpd.to_table(train_data)
-test_dh=dhpd.to_table(test_data)
+data_frame = data_frame.tail_pct(0.02)
+
+# train, test data split 70% train, 30% test
+train_dh = data_frame.head_pct(0.7)
+test_dh = data_frame.tail_pct(0.3)
 
 
-# set up input and feature size
-n_input = 4
+# define the model
+n_input = 3
 n_features = 1
 model = Sequential()
 model.add(LSTM(100, activation='relu', input_shape=(n_input, n_features)))
@@ -60,16 +53,18 @@ model.add(Dense(1))
 model.compile(optimizer='adam', loss='mse')
 
 
+# This function gathers data from a table into a NumPy ndarray
 def table_to_numpy_double(rows, cols):
     return gather.table_to_numpy_2d(rows, cols, np_type=np.double)
 
+# A function to fit our LSTM model
 def train_model(data):
-    global model
-    new_data=data.reshape(-1,1)
-    generator = TimeseriesGenerator(new_data, new_data, length=n_input, batch_size=1)
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    data = scaler.fit_transform(data)
+    generator = TimeseriesGenerator(data, data, length=n_input, batch_size=1)
     model.fit(generator, epochs = 50)
 
-# train the model
+# Train the LSTM model
 learn.learn(
     table = train_dh,
     model_func = train_model,
